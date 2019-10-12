@@ -2,8 +2,8 @@
     "name": "ajtaz60/ecommerce",
     "authors": [
         {
-            "name": "ajtaz60",
-            "email": "ajtaz60@gmail.com.br"
+            "name": "ajtaz",
+            "email": "ajtaz@gmail.com.br"
         }
     ],
     "require": {
@@ -13,7 +13,7 @@
     },
     "autoload": {
         "psr-4": {
-            "": "vendor\\hcodebr\\php-classes\\src"
+            "Hcode\\": "vendor\\hcodebr\\php-classes\\src"
         }
     }
 }
