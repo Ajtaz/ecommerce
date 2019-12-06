@@ -190,7 +190,7 @@ $app->get("/admin/forgot/reset", function() {
 	]);
 
 	$page->setTpl("forgot-reset", array(
-		"name"=>$user["description"],
+		"name"=>$user["desperson"],
 		"code"=>$_GET["code"]
 	));
 
@@ -201,7 +201,7 @@ $app->post("/admin/forgot/reset", function() {
 
 	$forgot = User::validForgotDecrypt($_POST["code"]); // valida novamente 
 
-	User::setForgotUsed($user["idrecovery"]);
+	User::setForgotUsed($forgot["idrecovery"]);
 
 	$user = new User();
 
@@ -218,7 +218,7 @@ $app->post("/admin/forgot/reset", function() {
 		"footer"=>false
 	]);
 
-	$page->setTpl("forgot-reset-sucess");
+	$page->setTpl("forgot-reset-success");
 
 });
 
