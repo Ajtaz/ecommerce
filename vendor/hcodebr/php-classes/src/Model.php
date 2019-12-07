@@ -17,10 +17,10 @@ class Model {
 
 		switch ($method)
 		{
-			case "get": return $this->values[$fieldName];
+			case "get": return (isset($this->values[$fieldName])) ? $this->values[$fieldName] : "0";
 			break;
 
-			case "set": $this->values[$fieldName] = $args[0];
+			case "set": $this->values[$fieldName] = $args[0]; 
 			break;
 
 		}
