@@ -16,6 +16,7 @@ class Cart extends Model {
 
 		$cart = new Cart();
 
+
 		If (isset($_SESSION[Cart::SESSION]) && (int)$_SESSION[Cart::SESSION]['idcart'] > 0) {
 
 			$cart->get((int)$_SESSION[Cart::SESSION]['idcart']);
