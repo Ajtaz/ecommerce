@@ -11,6 +11,55 @@ class User extends Model {
 	const SESSION = "User";
 	const SECRET = "1Secret2Key3Code"; // pelo menos 16 caracteres
 
+	public static function getFromSession()
+	{
+
+		$user = new User();
+
+		If (isset($_SESSION[User::SESSION]) && (int)$_SESSION[User::SESSION]['iduser'] > 0 ) {
+
+			$user->setData($_SESSION[User::SESSION]);
+
+		}
+
+		return $user;
+	}
+
+
+	public static function checkLogin($inadmin = true)
+	{
+
+		if (
+			!isset($_SESSION[User::SESSION])
+			||
+			!$_SESSION[User::SESSION]
+			||
+			!(int)$_SESSION[User::SESSION]["iduser"] > 0 
+		     ) {
+			// não está logado
+			return false;
+
+		} else {
+
+			if ($inadmin === true && (bool)$_SESSION[User::SESSION]['inadmin'] === true) {
+
+				return true;
+
+			} else if ($inadmin === false) {
+
+				return true;
+
+			} else {
+
+				return false;
+
+			}
+
+		}
+
+	}
+
+
 	public static function login($login, $password)
 	{
 
@@ -52,35 +101,39 @@ class User extends Model {
 	public static function verifyLogin($inadmin = true)
 	{
 
-		if (
-			!isset($_SESSION[User::SESSION])
-			||
-			!$_SESSION[User::SESSION]
-			||
-			!(int)$_SESSION[User::SESSION]["iduser"] > 0 
-			||
-			(bool)$_SESSION[User::SESSION]["inadmin"] !== $inadmin
-		) {
+			if (!User::checkLogin($inadmin))
+			{
+				if($inadmin){
 
-			header("Location: /admin/login");
-			exit;
+					header("Location: /admin/login");
 
+				}
+				else
+				{
+
+					header("Location: /login");
+				}
+
+				exit;
 		}
 
 	}
+
 
 	public static function logout()
 	{
 		$_SESSION[User::SESSION] = NULL;
 	}
 
+
 	public static function listAll()
 	{
 		$sql = new Sql();
 
-		return $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b USING(idperson) ORDER BY b.desperson");
+		return $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b USING(idperson) ORDER BY b.idperson");
 	}
 	
+
 	public function save()
 	{
 
@@ -131,7 +184,7 @@ class User extends Model {
 
 	}
 
-		public function delete()
+	public function delete()
 	{
 
 		$sql = new Sql();
@@ -142,8 +195,8 @@ class User extends Model {
 
 	}
 
-		public static function getForgot($email, $inadmin = true)
-		{
+	public static function getForgot($email, $inadmin = true)
+	{
 		     $sql = new Sql();
 		     $results = $sql->select("
 		         SELECT *
@@ -187,7 +240,7 @@ class User extends Model {
 		             return $link;
 		         }
 		     }
-		 }
+	}
 
 
 	public static function validForgotDecrypt($result)
@@ -219,7 +272,7 @@ class User extends Model {
 	     {
 	         return $results[0];
 	     }
-	 }
+	}
 
 
 	public static function setForgotUsed($idrecovery)
@@ -232,13 +285,14 @@ class User extends Model {
 
 	
 	public function setPassword($password)
-		{
-			$sql = new Sql();
-			$sql->query("UPDATE tb_users SET despassword = :password WHERE iduser = :iduser", array(
+	{
+		$sql = new Sql();
+		$sql->query("UPDATE tb_users SET despassword = :password WHERE iduser = :iduser", array(
 				":password"=>$password,
 				":iduser"=>$this->getiduser()
-			));
-		}
-}
+		));
+	}
 
+	
+}
 ?>

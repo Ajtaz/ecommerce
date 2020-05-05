@@ -21,7 +21,7 @@ $app->get("/admin/users/create", function(){
 
  	User::verifyLogin();
 
- 	$page = new PageAdmin();
+  	$page = new PageAdmin();
 
  	$page->setTpl("users-create");
 
@@ -60,44 +60,47 @@ $app->get("/admin/users/:iduser", function($iduser){
 
 $app->post("/admin/users/create", function(){
 
-	User::verifyLogin();
+ 	User::verifyLogin();
 
-	$msg = checkInput();
+ 	$user = new User();
 
-	if ($msg == "OK") {
-		$msg = checkPassword();
-		if ($msg == "OK") {
-			$user = new User();
-			$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
-			$user->setData($_POST);
-			$user->save();
-			header("Location: /admin/users");
-			exit;
-		}
-	}
+ 	echo "rota: /admin/users/create";
+ 	exit;
 
-	echo ("<br>" . $msg);
-	exit;
-	
+ 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
+
+ 	$msg = 1;
+ 	//$msg = checkInput();
+ 	
+ 	if ($msg = 0) {
+ 		$user->setData($_POST);
+ 		$user->save();
+ 	}  
+ 	else {
+ 		echo "falhou " . $msg;
+ 		exit;
+ 	}
+
+ 	header("Location: /admin/users");
+
 });
 
 $app->post("/admin/users/:iduser", function($iduser){
 
-	User::verifyLogin();
+ 	User::verifyLogin();
 
-	$msg = checkInput();
+ 	$user = new User();
 
-	if ($msg == "OK") {
-		$user = new User();
-		$user->get((int)$iduser);
-		$user->setData($_POST);
-		$user->update();
-		header("Location: /admin/users");
-		exit;
-	} 
+ 	$_POST["inadmin"] = (isset($_POST["inadmin"]))?1:0;
 
-	echo ("<br>" . $msg);
-	exit;
+ 	$user->get((int)$iduser);
+
+ 	$user->setData($_POST);
+
+ 	$user->update();
+
+ 	header("Location: /admin/users");
+ 	exit;
 
 });
 
@@ -105,8 +108,6 @@ function checkInput() {
 	// import_request_variables("gP");
 
 	$msgErr=null;
-
-	print_r($_POST);
 
 	if (empty($_POST["desperson"])) {
 		$msgErr = $msgErr . "Nome é obrigatório. " ;
@@ -128,45 +129,33 @@ function checkInput() {
 		}
 	}
 
-	if (empty($_POST["nrphone"])) {
+	if (empty($_POST["desphone"])) {
 		$msgErr = $msgErr . "Telefone é obrigatório. ";
 	} else {
-		$nrphone = test_input($_POST["nrphone"]);
+		$desphone = test_input($_POST["deslogin"]);
 	}
 
 	if (empty($_POST["desemail"])) {
 		$msgErr = $msgErr . "Email é obrigatório. ";
 	} else {
 		$desemail = test_input($_POST["desemail"]);
-		if (!filter_var($desemail, FILTER_VALIDATE_EMAIL)) {
-  		  $msgErr = $msgErr . "Formato inválido para e-mail. ";
-		}
 	}
 
-	if (is_null($msgErr)) return "OK";
-		else return $msgErr;
-			
-}
-
-function checkPassword() {
-
-	$msgErr=null;
-	
-	if (empty($_POST["despassword"])) {
+	if (empty($_POST["dessenha"])) {
 		$msgErr = $msgErr . "É obrigatório definir uma senha. ";
 	} else {
-		$deslogin = test_input($_POST["deslogin"]);
-		$despassword = test_input($_POST["despassword"]);
-		if ($despassword == $deslogin) {
+		$dessenha = test_input($_POST["dessenha"]);
+		if ($dessenha == $deslogin) {
 			$msgErr = $msgErr . "Senha não pode ser igual ao login. ";
 		}
 	}
 
-	if (is_null($msgErr)) return "OK";
-		else return $msgErr;
-
+	if (is_null($msgErr)) return 0;
+		else {
+			return $msgErr;
+		} 
+			
 }
-
 
 function test_input($data) {
 	$data = trim($data);
@@ -174,5 +163,11 @@ function test_input($data) {
 	$data = htmlspecialchars($data);
 	return $data;
 }
- 
+
+
+function formatMessage() {
+	$data = "mensagem de erro";
+	return $data;
+}
+
 ?>
