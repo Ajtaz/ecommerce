@@ -4,6 +4,7 @@ use \Hcode\Page;
 use \Hcode\Model\Product;
 use \Hcode\Model\Category;
 use \Hcode\Model\Cart;
+use \Hcode\Model\User;
 
 $app->get('/', function() {
 
@@ -61,15 +62,105 @@ $app->get("/products/:desurl",function($desurl){
 
 });
 
+
+$app->get("/logout", function(){
+
+	User::logout();
+
+	Cart::removeFromSession();
+
+    session_regenerate_id();
+
+   	header("Location: /login");
+
+   	exit;
+});
+
+$app->get("/login", function(){
+
+
+	$page = new Page();
+
+	$page->setTpl("login");
+
+});
+
+$app->post("/login", function(){
+
+	try{
+
+			User::login($_POST['login'], $_POST['password']);
+
+    }catch(Exception $e){
+
+    		User::setError($e->getMessage()); 
+
+    }
+
+	header("Location: /checkout");
+	exit;
+});
+
+
 $app->get("/cart", function(){
 
 	$cart = Cart::getFromSession();
 
-   	$page = new Page();
+    $page = new Page();
 
-   	$page->setTpl();
+	$page->setTpl("cart", [
+		'cart'=>$cart->getvalues(),
+		'products'=>$cart->getProducts()
+	]);
 
 });
 
+$app->get("/cart/:idproduct/add", function($idproduct){//rota para add no carrinho
+	
+	$product = new product();
 
+	$product->get((int)$idproduct);
+
+	$cart = Cart::getFromSession();
+
+	$qtd = (isset($_GET['qtd'])) ? (int)$_GET['qtd'] : 1;
+
+	for ($i=0; $i < $qtd; $i++) { 
+		$cart->addProduct($product);
+	}
+
+	$cart->addProduct($product);
+
+	header("Location: /cart");
+	exit;
+
+});
+
+$app->get("/cart/:idproduct/minus", function($idproduct){//rota para remover apenas um produto do carrinho
+	$product = new product();
+
+	$product->get((int)$idproduct);
+
+	$cart = Cart::getFromSession();
+
+	$cart->removeProduct($product);
+
+	header("Location: /cart");
+	exit;
+
+});
+
+$app->get("/cart/:idproduct/remove", function($idproduct){//rota para remover todos os produto do carrinho
+	$product = new product();
+
+	$product->get((int)$idproduct);
+
+	$cart = Cart::getFromSession();
+
+	$cart->removeProduct($product, true);
+
+	header("Location: /cart");
+	exit;
+
+});
 ?>

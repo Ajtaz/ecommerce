@@ -13,15 +13,19 @@ class Cart extends Model {
 
 	public static function getFromSession()
 	{
-
+		
 		$cart = new Cart();
+		
+		foreach ($_SESSION as $key=>$value)
+    	{
+	        var_dump($value);
+	    }
 
-
-		If (isset($_SESSION[Cart::SESSION]) && (int)$_SESSION[Cart::SESSION]['idcart'] > 0) {
+		if(isset($_SESSION[Cart::SESSION]['idcart']) && (int)$_SESSION[Cart::SESSION]['idcart'] > 0){//se a sessão estiver ativa - procura o carrinho
 
 			$cart->get((int)$_SESSION[Cart::SESSION]['idcart']);
 
-		} else {
+		} else { // ainda não há um carrinho 
 
 			$cart->getFromSessionID();
 
@@ -70,13 +74,14 @@ class Cart extends Model {
 			':dessessionid'=>session_id()
 		]);
 
+		// var_dump($results);
+
 		if (count($results) > 0) {
 
 			$this->setData($results[0]);
-
 		}
-
 	}
+
 
 	public function get(int $idcart)
 	{
@@ -109,8 +114,96 @@ class Cart extends Model {
 			':nrdays'=>$this->getnrdays(),
 		]);
 
-		$this->setData($results[0]);
-			
+		if (count($results) > 0) {
+
+			$this->setData($results[0]);
+		}
+	}
+
+
+	public static function removeFromSession() {
+    	
+    	$_SESSION[Cart::SESSION] = NULL;
+	
+	}
+
+	public function addProduct(Product $product) //funcao para adicionar produto ao carrinho
+	{
+		$sql = new Sql();
+
+		$sql->query("INSERT INTO tb_cartsproducts (idcart, idproduct) VALUES (:idcart, :idproduct)", [
+			':idcart'=>$this->getidcart(),
+			':idproduct'=>$product->getidproduct()
+		]);
+
+		// forçar atualização do frete quando for adicionado 1 item
+
+		// $this->getCalculateTotal();
+
+	}
+
+	public function removeProduct(Product $product, $all = false)
+	{
+		$sql = new Sql();
+
+		if($all)
+		{
+			$sql->query("UPDATE tb_cartsproducts SET dtremoved = now() WHERE idcart = :idcart AND idproduct = :idproduct AND dtremoved IS NULL", [
+				':idcart'=>$this->getidcart(),
+				'idproduct'=>$product->getidproduct()
+			]);
+		} else {
+		
+			$sql->query("UPDATE tb_cartsproducts SET dtremoved = now() WHERE idcart = :idcart AND idproduct = :idproduct AND dtremoved IS NULL LIMIT 1", [
+				':idcart'=>$this->getidcart(),
+				'idproduct'=>$product->getidproduct()
+			]);
+		}
+
+			//forçar atualização do frete quando for excluido 1 item
+
+		// $this->getCalculateTotal();
+
+	}
+
+	public function getProducts() // mostrar os produtos dentro do carrinho
+	{
+		$sql = new Sql();
+
+		return product::checkList($sql->select("SELECT b.idproduct , b.desproduct, b.vlprice, b.vlwidth, b.vlheight, b.vllength, b.vlweight, b.desurl, COUNT(*) AS nrqtd, SUM(b.vlprice) AS vltotal
+		                      FROM tb_cartsproducts a 
+		                INNER JOIN tb_products b 
+		                        ON a.idproduct = b.idproduct 
+		                     WHERE a.idcart = :idcart 
+		                       AND a.dtremoved IS NULL 
+		                  GROUP BY b.idproduct , b.desproduct, b.vlprice, b.vlwidth, b.vlheight, b.vllength, b.vlweight, b.desurl
+		                  ORDER BY b.desproduct ", [
+		                  	':idcart'=>$this->getidcart()
+		                  ]));
+	}
+
+	public function getProductsTotals()
+	{
+		$sql = new Sql();
+
+		$results = $sql->select(" SELECT SUM(vlprice) AS vlprice, SUM(vlwidth) AS vlwidth, SUM(vlheight) AS vlheight, SUM(vllength) AS vllength, SUM(vlweight) AS vlweight, COUNT(*) AS nrqtd 
+									FROM tb_products a
+							  INNER JOIN tb_cartsproducts b 
+							          ON a.idproduct = b.idproduct
+							       WHERE b.idcart = :idcart
+							         AND dtremoved IS NULL
+			", [
+				':idcart'=>$this->getidcart()
+			]);
+
+
+		if(count($results) > 0)
+		{
+			return $results[0];
+		}else
+		{
+			return [];
+		}
 	}
 }
 
