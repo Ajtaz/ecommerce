@@ -129,14 +129,12 @@ $app->get("/cart/:idproduct/add", function($idproduct){//rota para add no carrin
 		$cart->addProduct($product);
 	}
 
-	$cart->addProduct($product);
-
 	header("Location: /cart");
 	exit;
 
 });
 
-$app->get("/cart/:idproduct/minus", function($idproduct){//rota para remover apenas um produto do carrinho
+$app->get("/cart/:idproduct/minus", function($idproduct){ //caminho p/ remover apenas um produto do carrinho
 	$product = new product();
 
 	$product->get((int)$idproduct);
@@ -150,7 +148,7 @@ $app->get("/cart/:idproduct/minus", function($idproduct){//rota para remover ape
 
 });
 
-$app->get("/cart/:idproduct/remove", function($idproduct){//rota para remover todos os produto do carrinho
+$app->get("/cart/:idproduct/remove", function($idproduct){//caminho p/ remover todos os produto do carrinho
 	$product = new product();
 
 	$product->get((int)$idproduct);
