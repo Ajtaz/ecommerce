@@ -135,6 +135,7 @@ $app->get("/cart/:idproduct/add", function($idproduct){//rota para add no carrin
 });
 
 $app->get("/cart/:idproduct/minus", function($idproduct){ //caminho p/ remover apenas um produto do carrinho
+	
 	$product = new product();
 
 	$product->get((int)$idproduct);
