@@ -10,6 +10,7 @@ Use \Hcode\Model\User;
 class Cart extends Model {
 
 	const SESSION = "Cart";
+	const SESSION_ERROR = "CartError"; // introduzida na aula 117
 
 	public static function getFromSession()
 	{
@@ -138,6 +139,8 @@ class Cart extends Model {
 			':idproduct'=>$product->getidproduct()
 		]);
 
+		$this->getCalculateTotal();
+
 	}
 
 	public function removeProduct(Product $product, $all = false)
@@ -158,9 +161,7 @@ class Cart extends Model {
 			]);
 		}
 
-			//forçar atualização do frete qdo for excluido um item do carrinho 
-
-		// $this->getCalculateTotal();
+		$this->getCalculateTotal();
 
 	}
 
@@ -208,6 +209,135 @@ class Cart extends Model {
 			return [];
 		}
 	}
+
+
+	public function setFreight($nrzipcode)
+
+	{
+
+		$nrzipcode = str_replace('-', '', $nrzipcode);
+
+		$totals = $this->getProductsTotals();
+
+		If ($totals['nrqtd'] > 0) {
+
+			if ($totals['vlheight'] < 2) $totals['vlheight'] = 2;
+			if ($totals['vllength'] < 16) $totals['vllength'] = 16;
+			
+			$qs = http_build_query([
+				'nCdEmpresa'=>'',
+				'sDsSenha'=>'',
+				'nCdServico'=>'40010',
+				'sCepOrigem'=>'09853120',
+				'sCepDestino'=>$nrzipcode,
+				'nVlPeso'=>$totals['vlweight'],
+				'nCdFormato'=>'1',
+				'nVlComprimento'=>$totals['vllength'],
+				'nVlAltura'=>$totals['vlheight'],
+				'nVlLargura'=>$totals['vlwidth'],
+				'nVlDiametro'=>0,
+				'sCdMaoPropria'=>'S',
+				'nVlValorDeclarado'=>$totals['vlprice'],
+				'sCdAvisoRecebimento'=>'S'
+
+			]);
+
+			$xml = simplexml_load_file("http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPrecoPrazo?".$qs);
+
+			// echo json_encode($xml);
+
+			$result = $xml->Servicos->cServico;
+
+			if ($result->MsgErro != '') {
+
+				Cart::setMsgError($result->MsgErro);
+
+			} else {
+
+				Cart::clearMsgError();
+
+			}
+
+			$this->setnrdays($result->PrazoEntrega);
+			$this->setvlfreight(Cart::formatValueToDecimal($result->Valor));
+			$this->setdeszipcode($nrzipcode);
+
+			$this->save();
+
+			return $result;
+
+		} else {
+
+
+
+		}
+
+
+	}
+
+
+	
+	public static function formatValueToDecimal($value):float 
+	{
+		$value = str_replace('.', '', $value);
+		return str_replace(',', '.', $value);
+
+	}
+
+
+	public static function setMsgError($msg)
+	{
+
+		$_SESSION[Cart::SESSION_ERROR] = $msg;
+	}
+
+
+	public static function getMsgError()
+	{
+
+		$msg = (isset($_SESSION[Cart::SESSION_ERROR])) ? $_SESSION[Cart::SESSION_ERROR] : "";
+		Cart::clearMsgError();
+		return $msg;
+	}
+
+
+	public static function clearMsgError()
+	{
+
+		$_SESSION[Cart::SESSION_ERROR] = NULL;
+	}
+
+
+	public function updateFreight()
+	{
+
+		If ($this->getdeszipcode() != '') {
+
+			$this->setFreight($this->getdeszipcode());
+		}
+
+	}
+
+    public function getValues()  // sobreescrevendo o método getValues()
+    {
+    	$this->getCalculateTotal();
+
+    	return parent::getValues();
+
+    }
+
+    
+    public function getCalculateTotal()
+    {
+    	
+    	$this->updateFreight();
+
+    	$totals = $this->getProductsTotals();
+
+    	$this->setvlsubtotal($totals['vlprice']);
+    	$this->setvltotal($totals['vlprice'] + $this->getvlfreight());
+    }
+
 }
 
 ?>
